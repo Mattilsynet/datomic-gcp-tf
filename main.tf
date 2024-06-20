@@ -32,3 +32,26 @@ resource "google_vpc_access_connector" "datomic-access-connector" {
     google_project_service.vpcaccess
   ]
 }
+
+resource "google_service_account" "datomic-sa" {
+  project = var.project_id
+  account_id = "datomic-sa"
+}
+
+resource "google_project_iam_binding" "map_cloud_sql_client" {
+  project = var.project_id
+  role = "roles/cloudsql.client"
+
+  members = [
+    "serviceAccount:${google_service_account.datomic-sa.email}"
+  ]
+}
+
+resource "google_project_iam_binding" "map_compute_viewer" {
+  project = var.project_id
+  role = "roles/compute.viewer"
+
+  members = [
+    "serviceAccount:${google_service_account.datomic-sa.email}"
+  ]
+}
