@@ -108,6 +108,24 @@ resource "google_compute_instance" "datomic_server" {
   metadata_startup_script = "#!/bin/bash\necho Hello, World! > /home/username/gce-test.txt"
 }
 
+resource "google_project_iam_binding" "iam_binding_iap_tunnel_accessor" {
+  project = var.project_id
+  members = var.iap_access_members
+  role = "roles/iap.tunnelResourceAccessor"
+}
+
+resource "google_compute_firewall" "allow_ssh_ingress_from_iap" {
+  project = var.project_id
+  name = "allow-ssh-ingress-from-iap"
+  network = google_compute_network.datomic-vpc.id
+  direction = "INGRESS"
+  allow {
+    protocol = "TCP"
+    ports = [22]
+  }
+  source_ranges = ["35.235.240.0/20"]
+}
+
 resource "google_sql_database_instance" "db_instance" {
   name = "pluggable-storage"
   database_version = "POSTGRES_15"
