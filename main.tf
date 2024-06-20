@@ -64,7 +64,7 @@ resource "google_compute_instance" "datomic_server" {
   }
 
   name = "datomic-vm"
-  machine_type = var.machine_type
+  machine_type = var.vm_machine_type
   zone = "${var.region}-${var.zone}"
 
   tags = ["datomic-server"]
@@ -106,4 +106,34 @@ resource "google_compute_instance" "datomic_server" {
   }
 
   metadata_startup_script = "#!/bin/bash\necho Hello, World! > /home/username/gce-test.txt"
+}
+
+resource "google_sql_database_instance" "db_instance" {
+  name = "pluggable-storage"
+  database_version = "POSTGRES_15"
+  region = var.region
+
+  settings {
+    tier = var.storage_instance_tier
+  }
+
+  deletion_protection = "true"
+}
+
+resource "google_sql_database" "database" {
+  name = "datomic"
+  instance = google_sql_database_instance.db_instance.name
+  charset = "UTF8"
+  collation = "en_US.UTF8"
+}
+
+resource "random_password" "db_password" {
+  length = 24
+  special = true
+}
+
+resource "google_sql_user" "user" {
+  name = "datomic"
+  instance = google_sql_database_instance.db_instance.name
+  password = random_password.db_password.result
 }

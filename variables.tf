@@ -15,8 +15,14 @@ variable "zone" {
   default = "a"
 }
 
-variable "machine_type" {
+variable "vm_machine_type" {
   type = string
   description = "The GCP instance type for the Datomic transactor VM"
   default = "e2-standard-2"
+}
+
+variable "storage_instance_tier" {
+  type = string
+  description = "The tier for the Cloud SQL instance"
+  default = "db-f1-micro"
 }
