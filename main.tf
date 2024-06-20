@@ -55,3 +55,64 @@ resource "google_project_iam_binding" "map_compute_viewer" {
     "serviceAccount:${google_service_account.datomic-sa.email}"
   ]
 }
+
+resource "google_compute_address" "datomic_server_ip" {
+  project = var.project_id
+  name = "datomic-ip"
+  address_type = "INTERNAL"
+  subnetwork = google_compute_subnetwork.datomic-subnet.self_link
+  region = var.region
+}
+
+resource "google_compute_instance" "datomic_server" {
+  project = var.project_id
+
+  labels = {
+    project = var.project_id
+    server = "datomic"
+  }
+
+  name = "datomic-vm"
+  machine_type = var.machine_type
+  zone = "${var.region}-${var.zone}"
+
+  tags = ["datomic-server"]
+
+  metadata = {
+    enable-oslogin = "TRUE"
+    enable-osconfig = "TRUE"
+    enable-guest-attributes = "TRUE"
+  }
+
+  min_cpu_platform = "AUTOMATIC"
+
+  scheduling {
+    on_host_maintenance = "MIGRATE"
+  }
+
+  boot_disk {
+    initialize_params {
+      image = "ubuntu-minimal-2204-jammy-v20230918"
+      labels = {
+        os = "ubuntu"
+      }
+    }
+  }
+
+  network_interface {
+    subnetwork = google_compute_subnetwork.datomic-subnet.self_link
+    network_ip = google_compute_address.datomic_server_ip.address
+  }
+
+  service_account {
+    email = google_service_account.datomic-sa.email
+    scopes = [
+      "userinfo-email",
+      "compute-ro",
+      "storage-ro",
+      "cloud-platform"
+    ]
+  }
+
+  metadata_startup_script = "#!/bin/bash\necho Hello, World! > /home/username/gce-test.txt"
+}
