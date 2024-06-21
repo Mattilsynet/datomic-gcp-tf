@@ -42,6 +42,24 @@ resource "google_project_iam_binding" "map_cloud_sql_client" {
   ]
 }
 
+resource "google_project_iam_binding" "secretmanager_access" {
+  project = var.project_id
+  role = "roles/secretmanager.secretAccessor"
+
+  members = [
+    "serviceAccount:${google_service_account.datomic-sa.email}"
+  ]
+}
+
+resource "google_project_iam_binding" "secretmanager_viewer" {
+  project = var.project_id
+  role = "roles/secretmanager.viewer"
+
+  members = [
+    "serviceAccount:${google_service_account.datomic-sa.email}"
+  ]
+}
+
 resource "google_project_iam_binding" "map_compute_viewer" {
   project = var.project_id
   role = "roles/compute.viewer"
@@ -114,6 +132,8 @@ resource "google_project_iam_binding" "iam_binding_iap_tunnel_accessor" {
   role = "roles/iap.tunnelResourceAccessor"
 }
 
+# Allow SSH in from outside of GCP through IAP
+
 resource "google_compute_firewall" "allow_ssh_ingress_from_iap" {
   project = var.project_id
   name = "allow-ssh-ingress-from-iap"
@@ -124,4 +144,41 @@ resource "google_compute_firewall" "allow_ssh_ingress_from_iap" {
     ports = [22]
   }
   source_ranges = ["35.235.240.0/20"]
+}
+
+# Allow outbound traffic from the VM
+
+resource "google_compute_firewall" "gcf_egress_general_from_servers" {
+  project = var.project_id
+  name = "gcf-egress-general-from-servers"
+  network = google_compute_network.datomic-vpc.id
+  direction = "EGRESS"
+  allow {
+    protocol = "all"
+  }
+
+  destination_ranges = ["0.0.0.0/0"]
+  priority = 65534
+}
+
+# These are required for the machine to reach the internet
+
+resource "google_compute_router" "datomic_router" {
+  name = "datomic-router"
+  region = google_compute_subnetwork.datomic-subnet.region
+  network = google_compute_network.datomic-vpc.id
+
+  bgp {
+    asn = 64514
+  }
+}
+
+module "cloud-nat" {
+  source = "terraform-google-modules/cloud-nat/google"
+  version = "~> 5.0"
+  project_id = google_compute_router.datomic_router.project
+  region = google_compute_router.datomic_router.region
+  router = google_compute_router.datomic_router.name
+  name = "nat-config"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 }
