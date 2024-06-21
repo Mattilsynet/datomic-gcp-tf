@@ -125,33 +125,3 @@ resource "google_compute_firewall" "allow_ssh_ingress_from_iap" {
   }
   source_ranges = ["35.235.240.0/20"]
 }
-
-resource "google_sql_database_instance" "db_instance" {
-  name = "pluggable-storage"
-  database_version = "POSTGRES_15"
-  region = var.region
-
-  settings {
-    tier = var.storage_instance_tier
-  }
-
-  deletion_protection = "true"
-}
-
-resource "google_sql_database" "database" {
-  name = "datomic"
-  instance = google_sql_database_instance.db_instance.name
-  charset = "UTF8"
-  collation = "en_US.UTF8"
-}
-
-resource "random_password" "db_password" {
-  length = 24
-  special = true
-}
-
-resource "google_sql_user" "user" {
-  name = "datomic"
-  instance = google_sql_database_instance.db_instance.name
-  password = random_password.db_password.result
-}
