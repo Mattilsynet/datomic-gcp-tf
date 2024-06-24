@@ -21,12 +21,6 @@ variable "vm_machine_type" {
   default = "e2-standard-2"
 }
 
-variable "storage_instance_tier" {
-  type = string
-  description = "The tier for the Cloud SQL instance"
-  default = "db-f1-micro"
-}
-
 variable "iap_access_members" {
   type = list
   description = "Which members should have access to the Datomic VPC IAP accessor"
