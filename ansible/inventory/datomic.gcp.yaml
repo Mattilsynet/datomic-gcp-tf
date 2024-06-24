@@ -1,0 +1,19 @@
+---
+plugin: google.cloud.gcp_compute
+zones: # populate inventory with instances in these regions
+  - europe-north1-a
+projects:
+  - matnyttig-bb8c
+keyed_groups:
+  # Create groups from GCE labels
+  - key: labels
+    prefix: group
+  - key: labels.nats-management-server
+    prefix: management
+scopes:
+  - 'https://www.googleapis.com/auth/compute'
+auth_kind: application
+hostnames:
+  - name
+compose:
+  ansible_host: name
