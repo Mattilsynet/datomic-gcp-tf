@@ -1,0 +1,26 @@
+---
+- name: Install NTP secure package
+  become: true
+  apt:
+    name: ntpsec
+    state: present
+    update_cache: yes
+
+- name: Update NTP configuration
+  become: true
+  blockinfile:
+    path: /etc/ntpsec/ntp.conf
+    block: |
+      # Use public servers from the pool.ntp.org project.
+      # Please consider joining the pool (http://www.pool.ntp.org/join.html).
+      server 0.no.pool.ntp.org iburst
+      server 1.no.pool.ntp.org iburst
+      server 2.no.pool.ntp.org iburst
+      server 3.no.pool.ntp.org iburst
+
+- name: Ensure NTP service is running
+  become: true
+  service:
+    name: ntpsec
+    state: started
+    enabled: yes
