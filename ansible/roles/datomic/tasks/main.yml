@@ -1,0 +1,19 @@
+---
+- name: Create directory for Datomic
+  ansible.builtin.file:
+    state: directory
+    path: /etc/datomic
+    mode: 0770
+
+- name: Prepare password secret for use in transactor.properties
+  ansible.builtin.command: gcloud secrets versions access latest --secret "db-datomic-user-password"
+  register: db_password
+
+- name: Prepare user secret for use in transactor.properties
+  ansible.builtin.command: gcloud secrets versions access latest --secret "db-datomic-user-name"
+  register: db_user
+
+- name: Create transactor.properties from template
+  ansible.builtin.template:
+    src: transactor.properties.j2
+    dest: /etc/datomic/transactor.properties
