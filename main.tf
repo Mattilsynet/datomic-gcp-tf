@@ -1,13 +1,14 @@
-resource "google_compute_network" "datomic-vpc" {
+resource "google_compute_network" "datomic_vpc" {
   provider = google-beta
   name = "datomic-network"
+  auto_create_subnetworks = false
 }
 
-resource "google_compute_subnetwork" "datomic-subnet" {
+resource "google_compute_subnetwork" "datomic_subnet" {
   provider = google-beta
   name = "datomic-ip"
   ip_cidr_range = "10.124.0.0/28"
-  network = google_compute_network.datomic-vpc.id
+  network = google_compute_network.datomic_vpc.id
   region = var.region
 }
 
@@ -17,19 +18,19 @@ resource "google_project_service" "vpcaccess" {
   disable_on_destroy = false
 }
 
-resource "google_vpc_access_connector" "datomic-access-connector" {
+resource "google_vpc_access_connector" "datomic_access_connector" {
   provider = google-beta
   name = "datomic-access-connector"
   region = var.region
   subnet {
-    name = google_compute_subnetwork.datomic-subnet.name
+    name = google_compute_subnetwork.datomic_subnet.name
   }
   depends_on = [
     google_project_service.vpcaccess
   ]
 }
 
-resource "google_service_account" "datomic-sa" {
+resource "google_service_account" "datomic_sa" {
   account_id = "datomic-sa"
 }
 
@@ -38,7 +39,7 @@ resource "google_project_iam_binding" "map_cloud_sql_client" {
   role = "roles/cloudsql.client"
 
   members = [
-    "serviceAccount:${google_service_account.datomic-sa.email}"
+    "serviceAccount:${google_service_account.datomic_sa.email}"
   ]
 }
 
@@ -47,7 +48,7 @@ resource "google_project_iam_binding" "secretmanager_access" {
   role = "roles/secretmanager.secretAccessor"
 
   members = [
-    "serviceAccount:${google_service_account.datomic-sa.email}"
+    "serviceAccount:${google_service_account.datomic_sa.email}"
   ]
 }
 
@@ -56,7 +57,7 @@ resource "google_project_iam_binding" "secretmanager_viewer" {
   role = "roles/secretmanager.viewer"
 
   members = [
-    "serviceAccount:${google_service_account.datomic-sa.email}"
+    "serviceAccount:${google_service_account.datomic_sa.email}"
   ]
 }
 
@@ -65,14 +66,14 @@ resource "google_project_iam_binding" "map_compute_viewer" {
   role = "roles/compute.viewer"
 
   members = [
-    "serviceAccount:${google_service_account.datomic-sa.email}"
+    "serviceAccount:${google_service_account.datomic_sa.email}"
   ]
 }
 
 resource "google_compute_address" "datomic_server_ip" {
   name = "datomic-ip"
   address_type = "INTERNAL"
-  subnetwork = google_compute_subnetwork.datomic-subnet.self_link
+  subnetwork = google_compute_subnetwork.datomic_subnet.self_link
   region = var.region
 }
 
@@ -109,12 +110,12 @@ resource "google_compute_instance" "datomic_server" {
   }
 
   network_interface {
-    subnetwork = google_compute_subnetwork.datomic-subnet.self_link
+    subnetwork = google_compute_subnetwork.datomic_subnet.self_link
     network_ip = google_compute_address.datomic_server_ip.address
   }
 
   service_account {
-    email = google_service_account.datomic-sa.email
+    email = google_service_account.datomic_sa.email
     scopes = [
       "userinfo-email",
       "compute-ro",
@@ -137,7 +138,7 @@ resource "google_project_iam_binding" "iam_binding_iap_tunnel_accessor" {
 resource "google_compute_firewall" "allow_ssh_ingress_from_iap" {
   project = var.project_id
   name = "allow-ssh-ingress-from-iap"
-  network = google_compute_network.datomic-vpc.id
+  network = google_compute_network.datomic_vpc.id
   direction = "INGRESS"
   allow {
     protocol = "TCP"
@@ -151,7 +152,7 @@ resource "google_compute_firewall" "allow_ssh_ingress_from_iap" {
 resource "google_compute_firewall" "gcf_egress_general_from_servers" {
   project = var.project_id
   name = "gcf-egress-general-from-servers"
-  network = google_compute_network.datomic-vpc.id
+  network = google_compute_network.datomic_vpc.id
   direction = "EGRESS"
   allow {
     protocol = "all"
@@ -165,8 +166,8 @@ resource "google_compute_firewall" "gcf_egress_general_from_servers" {
 
 resource "google_compute_router" "datomic_router" {
   name = "datomic-router"
-  region = google_compute_subnetwork.datomic-subnet.region
-  network = google_compute_network.datomic-vpc.id
+  region = google_compute_subnetwork.datomic_subnet.region
+  network = google_compute_network.datomic_vpc.id
 
   bgp {
     asn = 64514
