@@ -15,6 +15,16 @@
   args:
     creates: /etc/datomic/user-client-private-key
 
+- name: Limit file permissions for client-private-key
+  file:
+    path: /etc/datomic/user-client-private-key
+    mode: '0600'
+
+- name: Prepare DER-version of client-private-key
+  ansible.builtin.command: openssl pkcs8 -topk8 -inform PEM -outform DER -in /etc/datomic/user-client-private-key -out /etc/datomic/user-client-private-key.der -nocrypt
+  args:
+    creates: /etc/datomic/user-client-private-key.der
+
 - name: Import server-cert for datomic-user
   ansible.builtin.shell: "gcloud secrets versions access latest --secret db-datomic-server-cert > /etc/datomic/server-cert"
   args:

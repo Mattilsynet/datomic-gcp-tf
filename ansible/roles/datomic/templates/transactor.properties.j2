@@ -21,7 +21,7 @@ sql-driver-class=org.postgresql.Driver
 
 ## Driver specified params, as semicolon-separated pairs.
 # Optional
-# sql-driver-params=<param1=val1&param2=val2...>
+sql-driver-params=ssl=true;sslmode=require;sslcert=/etc/datomic/user-client-cert;sslkey=/etc/datomic/user-client-private-key.der;sslrootcert=/etc/datomic/server-cert
 
 ## The query used to validate JDBC connection.
 # Optional
