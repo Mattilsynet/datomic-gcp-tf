@@ -13,7 +13,7 @@ RUN wget https://datomic-pro-downloads.s3.amazonaws.com/${DATOMIC_VERSION}/datom
 WORKDIR $DATOMIC_HOME
 RUN echo DATOMIC HOME: $DATOMIC_HOME
 
-VOLUME /config/transactor.properties
+VOLUME /etc/datomic
 VOLUME /log
 
-ENTRYPOINT ["./bin/transactor", "-Xmx4g", "-Xms4g", "-Ddatomic.printConnectionInfo=true", "config/transactor.properties"]
+ENTRYPOINT ["./bin/transactor", "-Xmx4g", "-Xms4g", "-Ddatomic.printConnectionInfo=true", "/etc/datomic/transactor.properties"]
