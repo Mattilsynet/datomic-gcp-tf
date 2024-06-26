@@ -47,3 +47,25 @@
   ansible.builtin.template:
     src: transactor.properties.j2
     dest: /etc/datomic/transactor.properties
+
+- name: Ensure psql is installed
+  ansible.builtin.apt:
+    name:
+      - postgresql-client
+    state: present
+
+- name: Create create-table.sh from template
+  ansible.builtin.template:
+    src: create-table.sh.j2
+    dest: /etc/datomic/create-table.sh
+    mode: '0755'
+
+- name: Upload SQL to create initial Datomic DB
+  ansible.builtin.template:
+    src: create-table.sql.j2
+    dest: /etc/datomic/create-table.sql
+  register: uploaded_sql
+
+- name: Create table
+  ansible.builtin.command: /etc/datomic/create-table.sh
+  when: uploaded_sql|changed

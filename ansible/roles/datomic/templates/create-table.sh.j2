@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+psql "sslmode=require host={{ cloud_sql_ip.stdout }} port=5432 dbname=datomic user=datomic-user password={{ db_password.stdout }} sslrootcert=/etc/datomic/server-cert sslcert=/etc/datomic/user-client-cert sslkey=/etc/datomic/user-client-private-key" < /etc/datomic/create-table.sql
