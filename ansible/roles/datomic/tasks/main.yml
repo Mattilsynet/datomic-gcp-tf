@@ -5,6 +5,11 @@
     path: /etc/datomic
     mode: 0770
 
+- name: Prepare cloud-sql IP for use in transactor.properties
+  local_action: ansible.builtin.command gcloud sql instances describe datomic --format 'value(ipAddresses[2].ipAddress)'
+  register: cloud_sql_ip
+  become: false
+
 - name: Prepare password secret for use in transactor.properties
   ansible.builtin.command: gcloud secrets versions access latest --secret "db-datomic-user-password"
   register: db_password

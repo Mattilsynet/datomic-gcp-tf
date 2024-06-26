@@ -9,7 +9,7 @@ port=4334
 ###################################################################
 # See https://docs.datomic.com/on-prem/storage.html
 
-sql-url=jdbc:postgresql://localhost:5432/datomic
+sql-url=jdbc:postgresql://{{ cloud_sql_ip.stdout }}:5432/datomic
 sql-user={{ db_user.stdout }}
 sql-password={{ db_password.stdout }}
 
