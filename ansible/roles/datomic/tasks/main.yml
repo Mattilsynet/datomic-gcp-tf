@@ -5,6 +5,21 @@
     path: /etc/datomic
     mode: 0770
 
+- name: Import client-cert for datomic-user
+  ansible.builtin.shell: "gcloud secrets versions access latest --secret db-datomic-datomic-user-client-cert > /etc/datomic/user-client-cert"
+  args:
+    creates: /etc/datomic/user-client-cert
+
+- name: Import client-private-key for datomic-user
+  ansible.builtin.shell: "gcloud secrets versions access latest --secret db-datomic-datomic-user-client-private-key > /etc/datomic/user-client-private-key"
+  args:
+    creates: /etc/datomic/user-client-private-key
+
+- name: Import server-cert for datomic-user
+  ansible.builtin.shell: "gcloud secrets versions access latest --secret db-datomic-server-cert > /etc/datomic/server-cert"
+  args:
+    creates: /etc/datomic/server-cert
+
 - name: Prepare cloud-sql IP for use in transactor.properties
   local_action: ansible.builtin.command gcloud sql instances describe datomic --format 'value(ipAddresses[2].ipAddress)'
   register: cloud_sql_ip
