@@ -68,4 +68,4 @@
 
 - name: Create table
   ansible.builtin.command: /etc/datomic/create-table.sh
-  when: uploaded_sql|changed
+  when: uploaded_sql.changed
