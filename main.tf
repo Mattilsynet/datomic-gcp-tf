@@ -1,3 +1,7 @@
+locals {
+  vpc_connector_name = "datomic-access-connector"
+}
+
 resource "google_compute_network" "datomic_vpc" {
   provider = google-beta
   name = "datomic-network"
@@ -20,7 +24,7 @@ resource "google_project_service" "vpcaccess" {
 
 resource "google_vpc_access_connector" "datomic_access_connector" {
   provider = google-beta
-  name = "datomic-access-connector"
+  name = local.vpc_connector_name
   region = var.region
   subnet {
     name = google_compute_subnetwork.datomic_subnet.name
@@ -34,7 +38,7 @@ resource "google_service_account" "datomic_sa" {
   account_id = "datomic-sa"
 }
 
-resource "google_project_iam_binding" "map_cloud_sql_client" {
+resource "google_project_iam_binding" "cloud_sql_client" {
   project = var.project_id
   role = "roles/cloudsql.client"
 
