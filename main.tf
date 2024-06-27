@@ -159,7 +159,19 @@ resource "google_compute_firewall" "gcf_egress_general_from_servers" {
   }
 
   destination_ranges = ["0.0.0.0/0"]
-  priority = 65534
+}
+
+resource "google_compute_firewall" "gcf_ingress_datomic_from_servers" {
+  project = var.project_id
+  name = "gcf-ingress-datomic-from-servers"
+  network = google_compute_network.datomic_vpc.id
+  direction = "INGRESS"
+  allow {
+    protocol = "tcp"
+    ports = ["4334", "4335", "4336"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
 }
 
 # These are required for the machine to reach the internet
