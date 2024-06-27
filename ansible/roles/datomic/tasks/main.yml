@@ -69,3 +69,16 @@
 - name: Create table
   ansible.builtin.command: /etc/datomic/create-table.sh
   when: uploaded_sql.changed
+
+- name: Start Datomic container
+  ansible.builtin.docker_container:
+    name: datomic
+    image: europe-north1-docker.pkg.dev/artifacts-352708/mat/datomic:latest
+    state: started
+    volumes:
+     - "/etc/datomic:/etc/datomic:ro"
+    ports:
+     - "4334:4334"
+     - "4335:4335"
+     - "4336:4336"
+    restart_policy: unless-stopped
