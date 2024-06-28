@@ -172,7 +172,7 @@ resource "google_compute_firewall" "gcf_ingress_datomic_from_servers" {
   direction = "INGRESS"
   allow {
     protocol = "tcp"
-    ports = ["4334", "4335", "4336"]
+    ports = ["4337", "4338", "4339"]
   }
 
   source_ranges = ["0.0.0.0/0"]

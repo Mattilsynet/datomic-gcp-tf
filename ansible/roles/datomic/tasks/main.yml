@@ -83,7 +83,7 @@
     volumes:
      - "/etc/datomic:/etc/datomic:ro"
     ports:
-     - "4334:4334"
-     - "4335:4335"
-     - "4336:4336"
+     - "4337:4337"
+     - "4338:4338"
+     - "4339:4339"
     restart_policy: unless-stopped
