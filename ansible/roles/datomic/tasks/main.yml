@@ -35,6 +35,11 @@
   register: cloud_sql_ip
   become: false
 
+- name: Prepare datomic-vm IP for use in transactor.properties
+  local_action: ansible.builtin.command gcloud compute instances describe datomic-vm --zone=europe-north1-a --format='get(networkInterfaces[0].networkIP)'
+  register: datomic_vm_ip
+  become: false
+
 - name: Prepare password secret for use in transactor.properties
   ansible.builtin.command: gcloud secrets versions access latest --secret "db-datomic-user-password"
   register: db_password

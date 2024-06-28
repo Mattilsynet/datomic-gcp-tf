@@ -3,8 +3,7 @@
 protocol=sql
 host=localhost
 port=4334
-
-
+alt-host={{ datomic_vm_ip.stdout }}
 
 ###################################################################
 # See https://docs.datomic.com/on-prem/storage.html
@@ -30,7 +29,7 @@ sql-driver-params=ssl=true;sslmode=require;sslcert=/etc/datomic/user-client-cert
 
 
 ###################################################################
-# See https://docs.datomic.com/on-prem/capacity.html
+# See https://docs.datomic.com/operation/capacity.html
 
 
 ## Recommended settings for -Xmx4g production usage.
