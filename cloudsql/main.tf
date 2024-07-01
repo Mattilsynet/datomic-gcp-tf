@@ -33,7 +33,7 @@ resource "google_project_service" "vpc_access_connector" {
 resource "google_vpc_access_connector" "vpc_access_connector" {
   project = var.project_id
   region = var.region
-  name = "datomic-storage-vpc-access-conn"
+  name = "datomic-storage-vpc-conn"
   network = var.vpc_self_link
   ip_cidr_range = "10.8.0.0/28"
   depends_on = [google_project_service.vpc_access_connector]
