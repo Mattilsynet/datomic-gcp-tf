@@ -1,3 +1,14 @@
+variable "project_id" {
+  type = string
+  description = "The project id"
+}
+
+variable "region" {
+  type = string
+  description = "The GCP region"
+  default = "europe-north1"
+}
+
 variable "vpc_self_link" {
   type = string
   description = "self_link of the Datomic VPC"
@@ -18,6 +29,12 @@ variable "deletion_protection" {
 variable "db_deletion_policy" {
   type = string
   description = "Deletion policy for the database, one of ABANDON or DELETE"
+  default = "ABANDON"
+}
+
+variable "user_deletion_policy" {
+  type = string
+  description = "Deletion policy for the database user, one of ABANDON or DELETE"
   default = "ABANDON"
 }
 

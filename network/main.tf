@@ -1,7 +1,6 @@
 resource "google_compute_network" "datomic_vpc" {
   provider = google-beta
   project = var.project_id
-  region = var.region
   name = "datomic-network"
   auto_create_subnetworks = false
 }

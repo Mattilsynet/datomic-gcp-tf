@@ -85,7 +85,6 @@ locals {
 module "network" {
   source = "github.com/Mattilsynet/datomic-gcp-tf.git//network"
   project_id = local.project_id
-  region = local.region
 }
 
 module "datomic" {
@@ -94,6 +93,7 @@ module "datomic" {
   region = local.region
   vpc_id = module.network.vpc_id
   subnet_name = module.network.subnet_name
+  subnet_link = module.network.subnet_link
   iap_access_members = [
     "group:my-team@my-corp.com"
   ]

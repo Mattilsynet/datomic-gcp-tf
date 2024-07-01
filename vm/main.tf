@@ -15,7 +15,7 @@ resource "google_vpc_access_connector" "datomic_access_connector" {
   region = var.region
   name = local.vpc_connector_name
   subnet {
-    name = var.subnet.name
+    name = var.subnet_name
   }
   depends_on = [
     google_project_service.vpcaccess
@@ -73,7 +73,6 @@ resource "google_compute_address" "datomic_server_ip" {
 
 resource "google_compute_instance" "datomic_server" {
   project = var.project_id
-  region = var.region
 
   labels = {
     server = "datomic"
