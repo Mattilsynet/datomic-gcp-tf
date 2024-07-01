@@ -77,12 +77,21 @@ Next, create a `main.yml` file and configure the Datomic VM module and the Cloud
 SQL instance.
 
 ```yml
+locals {
+  project_id = "myproject-1111"
+  region = "europe-north1"
+}
+
 module "network" {
   source = "github.com/Mattilsynet/datomic-gcp-tf.git//network"
+  project_id = local.project_id
+  region = local.region
 }
 
 module "datomic" {
   source = "github.com/Mattilsynet/datomic-gcp-tf.git//vm"
+  project_id = local.project_id
+  region = local.region
   vpc_id = module.network.vpc_id
   subnet_name = module.network.subnet_name
   iap_access_members = [
@@ -92,6 +101,8 @@ module "datomic" {
 
 module "storage" {
   source = "github.com/Mattilsynet/datomic-gcp-tf.git//cloudsql"
+  project_id = local.project_id
+  region = local.region
   vpc_self_link = module.network.vpc_self_link
   storage_instance_tier = "db-f1-micro"
   deletion_protection = true
