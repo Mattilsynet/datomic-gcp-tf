@@ -2,20 +2,6 @@ locals {
   vpc_connector_name = "datomic-access-connector"
 }
 
-resource "google_compute_network" "datomic_vpc" {
-  provider = google-beta
-  name = "datomic-network"
-  auto_create_subnetworks = false
-}
-
-resource "google_compute_subnetwork" "datomic_subnet" {
-  provider = google-beta
-  name = "datomic-ip"
-  ip_cidr_range = "10.124.0.0/28"
-  network = google_compute_network.datomic_vpc.id
-  region = var.region
-}
-
 resource "google_project_service" "vpcaccess" {
   provider = google-beta
   service = "vpcaccess.googleapis.com"
@@ -25,9 +11,9 @@ resource "google_project_service" "vpcaccess" {
 resource "google_vpc_access_connector" "datomic_access_connector" {
   provider = google-beta
   name = local.vpc_connector_name
-  region = var.region
+  #region = var.region
   subnet {
-    name = google_compute_subnetwork.datomic_subnet.name
+    name = var.subnet.name
   }
   depends_on = [
     google_project_service.vpcaccess
@@ -39,7 +25,7 @@ resource "google_service_account" "datomic_sa" {
 }
 
 resource "google_project_iam_binding" "cloud_sql_client" {
-  project = var.project_id
+  #project = var.project_id
   role = "roles/cloudsql.client"
 
   members = [
@@ -48,7 +34,7 @@ resource "google_project_iam_binding" "cloud_sql_client" {
 }
 
 resource "google_project_iam_binding" "secretmanager_access" {
-  project = var.project_id
+  #project = var.project_id
   role = "roles/secretmanager.secretAccessor"
 
   members = [
@@ -57,7 +43,7 @@ resource "google_project_iam_binding" "secretmanager_access" {
 }
 
 resource "google_project_iam_binding" "secretmanager_viewer" {
-  project = var.project_id
+  #project = var.project_id
   role = "roles/secretmanager.viewer"
 
   members = [
@@ -65,8 +51,8 @@ resource "google_project_iam_binding" "secretmanager_viewer" {
   ]
 }
 
-resource "google_project_iam_binding" "map_compute_viewer" {
-  project = var.project_id
+resource "google_project_iam_binding" "compute_viewer" {
+  #project = var.project_id
   role = "roles/compute.viewer"
 
   members = [
@@ -77,8 +63,8 @@ resource "google_project_iam_binding" "map_compute_viewer" {
 resource "google_compute_address" "datomic_server_ip" {
   name = "datomic-ip"
   address_type = "INTERNAL"
-  subnetwork = google_compute_subnetwork.datomic_subnet.self_link
-  region = var.region
+  subnetwork = var.subnet_link
+  # region = var.region
 }
 
 resource "google_compute_instance" "datomic_server" {
@@ -114,7 +100,7 @@ resource "google_compute_instance" "datomic_server" {
   }
 
   network_interface {
-    subnetwork = google_compute_subnetwork.datomic_subnet.self_link
+    subnetwork = var.subnet_link
     network_ip = google_compute_address.datomic_server_ip.address
   }
 
@@ -132,7 +118,7 @@ resource "google_compute_instance" "datomic_server" {
 }
 
 resource "google_project_iam_binding" "iam_binding_iap_tunnel_accessor" {
-  project = var.project_id
+  #project = var.project_id
   members = var.iap_access_members
   role = "roles/iap.tunnelResourceAccessor"
 }
@@ -140,9 +126,9 @@ resource "google_project_iam_binding" "iam_binding_iap_tunnel_accessor" {
 # Allow SSH in from outside of GCP through IAP
 
 resource "google_compute_firewall" "allow_ssh_ingress_from_iap" {
-  project = var.project_id
+  #project = var.project_id
   name = "allow-ssh-ingress-from-iap"
-  network = google_compute_network.datomic_vpc.id
+  network = var.vpc_id
   direction = "INGRESS"
   allow {
     protocol = "TCP"
@@ -154,9 +140,9 @@ resource "google_compute_firewall" "allow_ssh_ingress_from_iap" {
 # Allow outbound traffic from the VM
 
 resource "google_compute_firewall" "gcf_egress_general_from_servers" {
-  project = var.project_id
+  #project = var.project_id
   name = "gcf-egress-general-from-servers"
-  network = google_compute_network.datomic_vpc.id
+  network = var.vpc_id
   direction = "EGRESS"
   allow {
     protocol = "all"
@@ -166,9 +152,9 @@ resource "google_compute_firewall" "gcf_egress_general_from_servers" {
 }
 
 resource "google_compute_firewall" "gcf_ingress_datomic_from_servers" {
-  project = var.project_id
+  #project = var.project_id
   name = "gcf-ingress-datomic-from-servers"
-  network = google_compute_network.datomic_vpc.id
+  network = var.vpc_id
   direction = "INGRESS"
   allow {
     protocol = "tcp"
@@ -182,8 +168,8 @@ resource "google_compute_firewall" "gcf_ingress_datomic_from_servers" {
 
 resource "google_compute_router" "datomic_router" {
   name = "datomic-router"
-  region = google_compute_subnetwork.datomic_subnet.region
-  network = google_compute_network.datomic_vpc.id
+  #region = google_compute_subnetwork.datomic_subnet.region
+  network = var.vpc_id
 
   bgp {
     asn = 64514
@@ -193,8 +179,8 @@ resource "google_compute_router" "datomic_router" {
 module "cloud-nat" {
   source = "terraform-google-modules/cloud-nat/google"
   version = "~> 5.0"
-  project_id = google_compute_router.datomic_router.project
-  region = google_compute_router.datomic_router.region
+  #project_id = google_compute_router.datomic_router.project
+  #region = google_compute_router.datomic_router.region
   router = google_compute_router.datomic_router.name
   name = "nat-config"
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"

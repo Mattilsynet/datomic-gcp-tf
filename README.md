@@ -34,54 +34,123 @@ Docker container on ports 4337, 4338 and 4339.
 
 To spin up the transactor you will perform three steps:
 
-1. Run the Terraform module
-2. Create a Cloud SQL instance in the same VPC
+1. Configure and run the Terraform module
+2. Build and publish the Docker image
 3. Configure and run the Ansible collection
 
 ### Running the Terraform module
 
-### Creating a Cloud SQL instance
+Create your own Terraform project with a `settings.yml` file:
+
+```sh
+mkdir datomic-gcp
+cd datomic-gcp
+touch settings.yml
+```
+
+Configure Terraform to your liking. The state backend is up to you, but you must
+include the google providers config:
+
+```yml
+# settings.yml
+
+terraform {
+  required_version = ">= 1.1.7"
+  backend "gcs" {
+    bucket = "my-state-bucket"
+    prefix = "datomic"
+  }
+}
+
+provider "google" {
+  region = "europe-north1"
+  impersonate_service_account = "my-sa@my-project.iam.gserviceaccount.com"
+}
+
+provider "google-beta" {
+  region = "europe-north1"
+  impersonate_service_account = "my-sa@my-project.iam.gserviceaccount.com"
+}
+```
+
+Next, create a `main.yml` file and configure the Datomic VM module and the Cloud
+SQL instance.
+
+```yml
+module "network" {
+  source = "github.com/Mattilsynet/datomic-gcp-tf.git//network"
+}
+
+module "datomic" {
+  source = "github.com/Mattilsynet/datomic-gcp-tf.git//vm"
+  vpc_id = module.network.vpc_id
+  subnet_name = module.network.subnet_name
+  iap_access_members = [
+    "group:my-team@my-corp.com"
+  ]
+}
+
+module "storage" {
+  source = "github.com/Mattilsynet/datomic-gcp-tf.git//cloudsql"
+  vpc_self_link = module.network.vpc_self_link
+  storage_instance_tier = "db-f1-micro"
+  deletion_protection = true
+  db_deletion_policy = "ABANDON"
+  availability_type = "ZONAL"
+}
+```
+
+`iap_access_members` is a list of users or groups of users who should be allowed
+to use the IAP SSH tunnel into the VM.
+
+The Cloud SQL module doesn't come with a lot of options -- you may want to
+instead copy its source and tweak it to your preferences. If you do, beware that
+the Ansible collection expects to find the secrets this module creates, and that
+the SQL instance uses client encryption.
+
+Now you can run `terraform init`, then `terraform apply`.
+
+### Building and publishing the Datomic image
+
+Clone this repo. You will need a Docker repository to push the image to. Follow
+the official documentation to [create a GCP Docker
+repository](https://cloud.google.com/build/docs/build-push-docker-image).
+
+Then build, tag and push the image:
+
+```sh
+cd docker
+
+IMAGE=europe-north1-docker.pkg.dev/my-project-000/myrepo/datomic make publish
+```
+
+This will tag the image with both the current git commit sha and `latest`.
 
 ### Running the Ansible collection
 
-## SSH into the VM
+Clone this repo, and make a copy of the inventory template:
 
+```sh
+cp ansible/inventory/datomic.gcp.yaml.sample \
+  ansible/inventory/datomic.gcp.yaml
 ```
-gcloud compute ssh --zone "europe-north1-a" "datomic-vm" --tunnel-through-iap --project "matnyttig-bb8c"
-```
 
-## Setting up a Cloudsql instance
+Edit `ansible/inventory/datomic.gcp.yaml` and enter your specific project id,
+region, and Docker image.
 
-```hcl
-resource "google_sql_database_instance" "db_instance" {
-  name = "pluggable-storage"
-  database_version = "POSTGRES_15"
-  region = var.region
+The Ansible collection will use `gcloud` and run `jq` as local commands, so make
+sure you have both installed on your machine, and that you have run `gcloud auth
+login` and `gcloud auth application-default login` before running Ansible.
 
-  settings {
-    tier = var.storage_instance_tier
-  }
+- [Install Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+- [Install gcloud tooling](https://duckduckgo.com/?q=install+gcloud&ia=web)
+- [Install jq](https://jqlang.github.io/jq/download/)
 
-  deletion_protection = "true"
-}
+Now run the Ansible collection:
 
-resource "google_sql_database" "database" {
-  name = "datomic"
-  instance = google_sql_database_instance.db_instance.name
-  charset = "UTF8"
-  collation = "en_US.UTF8"
-}
-
-resource "random_password" "db_password" {
-  length = 24
-  special = true
-}
-
-resource "google_sql_user" "user" {
-  name = "datomic"
-  instance = google_sql_database_instance.db_instance.name
-  password = random_password.db_password.result
-}
+```sh
+cd ansible
+ansible-playbook -i inventory/datomic.gcp.yaml playbooks/setup-datomic.yml
 ```
 
 ## Local access to production
@@ -116,21 +185,21 @@ psql -h localhost -U datomic-user datomic
 
 When a Datomic peer establishes a connection, it will go to the storage to find
 the location of the transactor. The transactor will give its location as
-`10.124.0.2`, thus we need for that IP to resolve from our local machine in
+`10.0.0.2`, thus we need for that IP to resolve from our local machine in
 order to reach it. You can add it as an alias on your en0 interface:
 
 ```sh
-sudo ifconfig en0 alias 10.124.0.2 netmask 255.255.255.0
+sudo ifconfig en0 alias 10.0.0.2 netmask 255.255.255.0
 ```
 
 Next, run an SSH tunnel to the Datomic VM on this IP:
 
 ```sh
 gcloud compute start-iap-tunnel \
-  --local-host-port 10.124.0.2:4337 \
-  datomic-vm 4337 \
+  --local-host-port 10.0.0.2:4337 \
   --zone europe-north1-a \
-  --project project-id
+  --project project-id \
+  datomic-vm 4337
 ```
 
 Adjust project id and zone as appropriate. With the two proxies established, you
