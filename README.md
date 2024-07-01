@@ -92,7 +92,6 @@ module "datomic" {
   project_id = local.project_id
   region = local.region
   vpc_id = module.network.vpc_id
-  subnet_name = module.network.subnet_name
   subnet_link = module.network.subnet_link
   iap_access_members = [
     "group:my-team@my-corp.com"
@@ -103,7 +102,7 @@ module "storage" {
   source = "github.com/Mattilsynet/datomic-gcp-tf.git//cloudsql"
   project_id = local.project_id
   region = local.region
-  vpc_self_link = module.network.vpc_self_link
+  vpc_id = module.network.vpc_id
   storage_instance_tier = "db-f1-micro"
   deletion_protection = true
   db_deletion_policy = "ABANDON"

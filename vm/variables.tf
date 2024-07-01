@@ -9,14 +9,9 @@ variable "region" {
   default = "europe-north1"
 }
 
-variable "subnet_name" {
+variable "subnet_id" {
   type = string
-  description = "The name of the subnetwork to put the VM in"
-}
-
-variable "subnet_link" {
-  type = string
-  description = "The self_link of the subnetwork to put the VM in"
+  description = "The id of the subnetwork to put the VM in"
 }
 
 variable "zone" {

@@ -9,9 +9,9 @@ variable "region" {
   default = "europe-north1"
 }
 
-variable "vpc_self_link" {
+variable "vpc_id" {
+  description = "The ID of the VPC to deploy to"
   type = string
-  description = "self_link of the Datomic VPC"
 }
 
 variable "storage_instance_tier" {

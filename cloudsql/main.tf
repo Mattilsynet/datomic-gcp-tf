@@ -3,14 +3,19 @@ locals {
   database_username = "datomic-user"
 }
 
+data "google_compute_network" "vpc" {
+  name = var.vpc_id
+  project = var.project_id
+}
+
 resource "google_compute_global_address" "cloudsql_private_ip" {
   provider = google-beta
-  project = var.project_id
   name = "datomic-storage-private-ip"
   purpose = "VPC_PEERING"
   address_type = "INTERNAL"
   prefix_length = 24
   network = var.vpc_self_link
+  depends_on = [data.google_compute_network.vpc-network]
 }
 
 resource "google_service_networking_connection" "private_vpc_connection" {
