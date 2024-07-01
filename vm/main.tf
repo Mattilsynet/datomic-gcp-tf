@@ -186,9 +186,9 @@ resource "google_compute_router" "datomic_router" {
 
 module "cloud-nat" {
   source = "terraform-google-modules/cloud-nat/google"
-  version = "~> 5.0"
-  project = var.project_id
+  project_id = var.project_id
   region = var.region
+  version = "~> 5.0"
   router = google_compute_router.datomic_router.name
   name = "nat-config"
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
