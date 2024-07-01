@@ -1,13 +1,13 @@
-# variable "project_id" {
-#   type = string
-#   description = "The project id"
-# }
+variable "project_id" {
+  type = string
+  description = "The project id"
+}
 
-# variable "region" {
-#   type = string
-#   description = "The GCP region"
-#   default = "europe-north1"
-# }
+variable "region" {
+  type = string
+  description = "The GCP region"
+  default = "europe-north1"
+}
 
 variable "subnet_name" {
   type = string

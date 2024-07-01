@@ -4,14 +4,16 @@ locals {
 
 resource "google_project_service" "vpcaccess" {
   provider = google-beta
+  project = var.project_id
   service = "vpcaccess.googleapis.com"
   disable_on_destroy = false
 }
 
 resource "google_vpc_access_connector" "datomic_access_connector" {
   provider = google-beta
+  project = var.project_id
+  region = var.region
   name = local.vpc_connector_name
-  #region = var.region
   subnet {
     name = var.subnet.name
   }
@@ -21,11 +23,12 @@ resource "google_vpc_access_connector" "datomic_access_connector" {
 }
 
 resource "google_service_account" "datomic_sa" {
+  project = var.project_id
   account_id = "datomic-sa"
 }
 
 resource "google_project_iam_binding" "cloud_sql_client" {
-  #project = var.project_id
+  project = var.project_id
   role = "roles/cloudsql.client"
 
   members = [
@@ -34,7 +37,7 @@ resource "google_project_iam_binding" "cloud_sql_client" {
 }
 
 resource "google_project_iam_binding" "secretmanager_access" {
-  #project = var.project_id
+  project = var.project_id
   role = "roles/secretmanager.secretAccessor"
 
   members = [
@@ -43,7 +46,7 @@ resource "google_project_iam_binding" "secretmanager_access" {
 }
 
 resource "google_project_iam_binding" "secretmanager_viewer" {
-  #project = var.project_id
+  project = var.project_id
   role = "roles/secretmanager.viewer"
 
   members = [
@@ -52,7 +55,7 @@ resource "google_project_iam_binding" "secretmanager_viewer" {
 }
 
 resource "google_project_iam_binding" "compute_viewer" {
-  #project = var.project_id
+  project = var.project_id
   role = "roles/compute.viewer"
 
   members = [
@@ -61,13 +64,17 @@ resource "google_project_iam_binding" "compute_viewer" {
 }
 
 resource "google_compute_address" "datomic_server_ip" {
+  project = var.project_id
+  region = var.region
   name = "datomic-ip"
   address_type = "INTERNAL"
   subnetwork = var.subnet_link
-  # region = var.region
 }
 
 resource "google_compute_instance" "datomic_server" {
+  project = var.project_id
+  region = var.region
+
   labels = {
     server = "datomic"
   }
@@ -118,7 +125,7 @@ resource "google_compute_instance" "datomic_server" {
 }
 
 resource "google_project_iam_binding" "iam_binding_iap_tunnel_accessor" {
-  #project = var.project_id
+  project = var.project_id
   members = var.iap_access_members
   role = "roles/iap.tunnelResourceAccessor"
 }
@@ -126,7 +133,7 @@ resource "google_project_iam_binding" "iam_binding_iap_tunnel_accessor" {
 # Allow SSH in from outside of GCP through IAP
 
 resource "google_compute_firewall" "allow_ssh_ingress_from_iap" {
-  #project = var.project_id
+  project = var.project_id
   name = "allow-ssh-ingress-from-iap"
   network = var.vpc_id
   direction = "INGRESS"
@@ -140,7 +147,7 @@ resource "google_compute_firewall" "allow_ssh_ingress_from_iap" {
 # Allow outbound traffic from the VM
 
 resource "google_compute_firewall" "gcf_egress_general_from_servers" {
-  #project = var.project_id
+  project = var.project_id
   name = "gcf-egress-general-from-servers"
   network = var.vpc_id
   direction = "EGRESS"
@@ -152,7 +159,7 @@ resource "google_compute_firewall" "gcf_egress_general_from_servers" {
 }
 
 resource "google_compute_firewall" "gcf_ingress_datomic_from_servers" {
-  #project = var.project_id
+  project = var.project_id
   name = "gcf-ingress-datomic-from-servers"
   network = var.vpc_id
   direction = "INGRESS"
@@ -167,9 +174,10 @@ resource "google_compute_firewall" "gcf_ingress_datomic_from_servers" {
 # These are required for the machine to reach the internet
 
 resource "google_compute_router" "datomic_router" {
-  name = "datomic-router"
-  #region = google_compute_subnetwork.datomic_subnet.region
+  project = var.project_id
+  region = var.region
   network = var.vpc_id
+  name = "datomic-router"
 
   bgp {
     asn = 64514
@@ -179,8 +187,8 @@ resource "google_compute_router" "datomic_router" {
 module "cloud-nat" {
   source = "terraform-google-modules/cloud-nat/google"
   version = "~> 5.0"
-  #project_id = google_compute_router.datomic_router.project
-  #region = google_compute_router.datomic_router.region
+  project = var.project_id
+  region = var.region
   router = google_compute_router.datomic_router.name
   name = "nat-config"
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
