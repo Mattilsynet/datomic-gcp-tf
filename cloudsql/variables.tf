@@ -10,7 +10,7 @@ variable "storage_instance_tier" {
 }
 
 variable "deletion_protection" {
-  type = boolean
+  type = bool
   description = "Cloud SQL instance deletion protection"
   default = true
 }
