@@ -9,6 +9,6 @@ resource "google_compute_subnetwork" "datomic_subnet" {
   provider = google-beta
   project = var.project_id
   name = "datomic-ip"
-  ip_cidr_range = "10.0.0.0/24"
+  ip_cidr_range = "10.0.0.0/28"
   network = google_compute_network.datomic_vpc.id
 }
