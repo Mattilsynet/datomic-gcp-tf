@@ -3,45 +3,24 @@ locals {
   database_username = "datomic-user"
 }
 
-data "google_compute_network" "vpc" {
-  name = var.vpc_id
-  project = var.project_id
-}
-
 resource "google_compute_global_address" "cloudsql_private_ip" {
   provider = google-beta
+  project = var.project_id
   name = "datomic-storage-private-ip"
   purpose = "VPC_PEERING"
   address_type = "INTERNAL"
   prefix_length = 24
-  network = var.vpc_self_link
-  depends_on = [data.google_compute_network.vpc-network]
+  network = var.vpc_link
 }
 
 resource "google_service_networking_connection" "private_vpc_connection" {
   provider = google-beta
-  network = var.vpc_self_link
+  network = var.vpc_link
   service = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.cloudsql_private_ip.name]
-}
-
-resource "google_project_service" "vpc_access_connector" {
-  project = var.project_id
-  service = "vpcaccess.googleapis.com"
-
-  timeouts {
-    create = "10m"
-    delete = "10m"
-  }
-}
-
-resource "google_vpc_access_connector" "vpc_access_connector" {
-  project = var.project_id
-  region = var.region
-  name = "datomic-storage-vpc-conn"
-  network = var.vpc_self_link
-  ip_cidr_range = "10.8.0.0/28"
-  depends_on = [google_project_service.vpc_access_connector]
+  depends_on = [
+    google_compute_global_address.cloudsql_private_ip
+  ]
 }
 
 resource "google_sql_database_instance" "db_instance" {
@@ -58,7 +37,7 @@ resource "google_sql_database_instance" "db_instance" {
 
     ip_configuration {
       ipv4_enabled = false
-      private_network = var.vpc_self_link
+      private_network = var.vpc_link
       require_ssl = true
       ssl_mode = "TRUSTED_CLIENT_CERTIFICATE_REQUIRED"
     }

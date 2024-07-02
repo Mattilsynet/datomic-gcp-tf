@@ -11,4 +11,5 @@ hostnames:
   - name
 compose:
   ansible_host: name
-datomic_docker_image: europe-north1-docker.pkg.dev/myproject-1111/repo/datomic:latest
+  datomic_docker_image: "'europe-north1-docker.pkg.dev/myproject-1111/repo/datomic:latest'"
+  gcp_repo_host: "'europe-north1-docker.pkg.dev'"

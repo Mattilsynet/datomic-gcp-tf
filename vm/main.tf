@@ -1,31 +1,3 @@
-locals {
-  vpc_connector_name = "datomic-access-connector"
-}
-
-data "google_compute_subnetwork" "subnetwork" {
-  self_link = var.subnet_link
-}
-
-resource "google_project_service" "vpcaccess" {
-  provider = google-beta
-  project = var.project_id
-  service = "vpcaccess.googleapis.com"
-  disable_on_destroy = false
-}
-
-resource "google_vpc_access_connector" "datomic_access_connector" {
-  provider = google-beta
-  project = var.project_id
-  region = var.region
-  name = local.vpc_connector_name
-  subnet {
-    name = google_compute_subnetwork.subnetwork.name
-  }
-  depends_on = [
-    google_project_service.vpcaccess
-  ]
-}
-
 resource "google_service_account" "datomic_sa" {
   project = var.project_id
   account_id = "datomic-sa"
@@ -72,7 +44,7 @@ resource "google_compute_address" "datomic_server_ip" {
   region = var.region
   name = "datomic-ip"
   address_type = "INTERNAL"
-  subnetwork = google_compute_subnetwork.subnetwork.self_link
+  subnetwork = var.subnet_link
 }
 
 resource "google_compute_instance" "datomic_server" {
@@ -110,7 +82,7 @@ resource "google_compute_instance" "datomic_server" {
   }
 
   network_interface {
-    subnetwork = google_compute_subnetwork.subnetwork.self_link
+    subnetwork = var.subnet_link
     network_ip = google_compute_address.datomic_server_ip.address
   }
 

@@ -37,3 +37,7 @@
     name: docker
     state: started
     enabled: yes
+
+- name: Set up Docker GCP auth helper
+  ansible.builtin.command: "gcloud auth configure-docker --quiet {{ gcp_repo_host }}"
+  when: gcp_repo_host

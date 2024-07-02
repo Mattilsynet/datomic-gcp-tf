@@ -9,8 +9,13 @@ variable "region" {
   default = "europe-north1"
 }
 
-variable "vpc_id" {
-  description = "The ID of the VPC to deploy to"
+variable "vpc_name" {
+  description = "The name of the VPC to deploy to"
+  type = string
+}
+
+variable "vpc_link" {
+  description = "The self_link of the VPC to deploy to"
   type = string
 }
 

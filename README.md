@@ -73,8 +73,25 @@ provider "google-beta" {
 }
 ```
 
-Next, create a `main.yml` file and configure the Datomic VM module and the Cloud
-SQL instance.
+Next, create a `main.yml` file and configure the networking module:
+
+```yml
+locals {
+  project_id = "myproject-1111"
+  region = "europe-north1"
+}
+
+module "network" {
+  source = "github.com/Mattilsynet/datomic-gcp-tf.git//network"
+  project_id = local.project_id
+  region = local.region
+}
+```
+
+Run `terraform init` followed by `terraform apply`. You must make sure the
+network exists before continuing, or Terraform will sadly error out.
+
+Now configure the Datomic VM module and the Cloud SQL instance:
 
 ```yml
 locals {
@@ -92,6 +109,7 @@ module "datomic" {
   project_id = local.project_id
   region = local.region
   vpc_id = module.network.vpc_id
+  vpc_link = module.network.vpc_link
   subnet_link = module.network.subnet_link
   iap_access_members = [
     "group:my-team@my-corp.com"
@@ -118,7 +136,8 @@ instead copy its source and tweak it to your preferences. If you do, beware that
 the Ansible collection expects to find the secrets this module creates, and that
 the SQL instance uses client encryption.
 
-Now you can run `terraform init`, then `terraform apply`.
+Now run `terraform init` again, followed by another `terraform apply`. This will
+take a while.
 
 ### Building and publishing the Datomic image
 
@@ -135,6 +154,32 @@ IMAGE=europe-north1-docker.pkg.dev/my-project-000/myrepo/datomic make publish
 ```
 
 This will tag the image with both the current git commit sha and `latest`.
+
+If you need a Docker repository to push to, you can use GCP artifact registry:
+
+```sh
+locals {
+  project_id = "myproject-1111"
+  region = "europe-north1"
+}
+
+# ...
+
+resource "google_artifact_registry_repository" "repo" {
+  project = local.project_id
+  location = local.region
+  repository_id = "datomic-transactor"
+  format = "DOCKER"
+}
+
+resource "google_artifact_registry_repository_iam_member" "artifact_registry_reader" {
+  project = local.project_id
+  location = local.region
+  member = "serviceAccount:${module.datomic.service_account_email}"
+  repository = "datomic-transactor"
+  role = "roles/artifactregistry.reader"
+}
+```
 
 ### Running the Ansible collection
 
@@ -156,7 +201,19 @@ login` and `gcloud auth application-default login` before running Ansible.
 - [Install gcloud tooling](https://duckduckgo.com/?q=install+gcloud&ia=web)
 - [Install jq](https://jqlang.github.io/jq/download/)
 
-Now run the Ansible collection:
+Now SSH into the server once to make sure that the GCP tooling installs an SSH
+certificate on your machine and on the remote server, and to verify that things
+are set up correctly:
+
+```sh
+gcloud compute ssh \
+  --zone europe-north1-a \
+  --tunnel-through-iap \
+  --project myproject-111 \
+  datomic-vm
+```
+
+Then run the Ansible collection:
 
 ```sh
 cd ansible
