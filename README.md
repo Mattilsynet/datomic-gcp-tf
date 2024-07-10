@@ -21,11 +21,12 @@ for details:
   for GCP authorized SSH access.
 - A NAT for outbound traffic from the VM
 
-The Terraform module does not set up a storage backend. It is recommended to
-manage the life-cycle of the storage backend (where your data lives) and the
-transactor VM (stateless) separately. The module has been developed for, and
-tested with a postgresql CloudSQL instance. See below for instructions on how to
-set this up.
+The Terraform module manages the life-cycle of the storage backend (where your
+data lives) and the transactor VM (stateless) separately. You do not have to use
+the exact storage backend suggested here, but the Ansible setup does assume it
+can read some details about it from both secret manager and SQL instances. If
+you set up storage differently, please review the details of the Ansible
+collection before running it.
 
 The Ansible collection prepares the VM for running the Datomic transactor as a
 Docker container on ports 4337, 4338 and 4339.
