@@ -3,40 +3,28 @@ resource "google_service_account" "datomic_sa" {
   account_id = "datomic-sa"
 }
 
-resource "google_project_iam_binding" "cloud_sql_client" {
+resource "google_project_iam_member" "cloud_sql_client" {
   project = var.project_id
   role = "roles/cloudsql.client"
-
-  members = [
-    "serviceAccount:${google_service_account.datomic_sa.email}"
-  ]
+  member = "serviceAccount:${google_service_account.datomic_sa.email}"
 }
 
-resource "google_project_iam_binding" "secretmanager_access" {
+resource "google_project_iam_member" "secretmanager_access" {
   project = var.project_id
   role = "roles/secretmanager.secretAccessor"
-
-  members = [
-    "serviceAccount:${google_service_account.datomic_sa.email}"
-  ]
+  member = "serviceAccount:${google_service_account.datomic_sa.email}"
 }
 
-resource "google_project_iam_binding" "secretmanager_viewer" {
+resource "google_project_iam_member" "secretmanager_viewer" {
   project = var.project_id
   role = "roles/secretmanager.viewer"
-
-  members = [
-    "serviceAccount:${google_service_account.datomic_sa.email}"
-  ]
+  member = "serviceAccount:${google_service_account.datomic_sa.email}"
 }
 
-resource "google_project_iam_binding" "compute_viewer" {
+resource "google_project_iam_member" "compute_viewer" {
   project = var.project_id
   role = "roles/compute.viewer"
-
-  members = [
-    "serviceAccount:${google_service_account.datomic_sa.email}"
-  ]
+  member = "serviceAccount:${google_service_account.datomic_sa.email}"
 }
 
 resource "google_compute_address" "datomic_server_ip" {
@@ -99,9 +87,10 @@ resource "google_compute_instance" "datomic_server" {
   metadata_startup_script = "#!/bin/bash\necho Hello, World! > /home/username/gce-test.txt"
 }
 
-resource "google_project_iam_binding" "iam_binding_iap_tunnel_accessor" {
+resource "google_project_iam_member" "iap_tunnel_accessor" {
+  count = length(var.iap_access_members)
   project = var.project_id
-  members = var.iap_access_members
+  member = var.iap_access_members[count.index]
   role = "roles/iap.tunnelResourceAccessor"
 }
 
