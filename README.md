@@ -1,7 +1,7 @@
 # Datomic on GCP
 
 A Terraform module, a Docker image, and an Ansible collection to run a Datomic
-transactor on Google Cloud Platform (GCP).
+transactor on Google Cloud Platform (GCP) with a managed SQL storage backend.
 
 ## Overview
 
