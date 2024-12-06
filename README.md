@@ -3,6 +3,12 @@
 A Terraform module, a Docker image, and an Ansible collection to run a Datomic
 transactor on Google Cloud Platform (GCP) with a managed SQL storage backend.
 
+NB! We've found that the managed SQL instance doesn't add a lot. It makes the
+setup more expensive, as well as slower due to the extra layer of VPC peering.
+We recommend usign [Datomic on GCP with a local
+Postgres](https://github.com/Mattilsynet/datomic-gcp-psql-tf) instead. It is
+similar to this setup, but simpler to work with, cheaper, and faster.
+
 ## Overview
 
 The Terraform module installs the following resources (see [main.tf](./main.tf)
